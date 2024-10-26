@@ -245,6 +245,8 @@ public class MeshSlicer : MonoBehaviour
         sideAObj.GetComponent<MeshCollider>().sharedMesh = sideAMesh;
         sideAObj.GetComponent<MeshRenderer>().materials = new Material[]
             { targetMesh.GetComponent<MeshRenderer>().material, capMaterial};
+        sideAObj.transform.position = targetMesh.transform.position;
+        sideAObj.transform.rotation = targetMesh.transform.rotation;
 
         Mesh sideBMesh = new Mesh();
         sideBMesh.vertices = sideB.vertices.ToArray();
@@ -257,6 +259,8 @@ public class MeshSlicer : MonoBehaviour
         sideBObj.GetComponent<MeshCollider>().sharedMesh = sideBMesh;
         sideBObj.GetComponent<MeshRenderer>().materials = new Material[]
             { targetMesh.GetComponent<MeshRenderer>().material, capMaterial};
+        sideBObj.transform.position = targetMesh.transform.position;
+        sideBObj.transform.rotation = targetMesh.transform.rotation;
 
         targetMesh.SetActive(false);
     }
@@ -333,8 +337,8 @@ public class MeshSlicer : MonoBehaviour
         for (int i = 0; i < CreatedPointsInfo.vertices.Count; ++i)
         {
             sideInfo.vertices.Add(CreatedPointsInfo.vertices[i]);
-            sideInfo.normals.Add(CreatedPointsInfo.normals[i]);
-            sideInfo.uv.Add(CreatedPointsInfo.uv[i]);
+            sideInfo.normals.Add(faceNormal);
+            sideInfo.uv.Add(new Vector2(0f, 0f));
         }
 
         sideInfo.vertices.Add(midPoint);
