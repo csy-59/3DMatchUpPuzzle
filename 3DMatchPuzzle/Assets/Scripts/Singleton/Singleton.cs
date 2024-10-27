@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class Singleton<T> where T : new()
 {
-    private T instance;
-    public T Instance
+    private static T instance;
+    public static T Instance
     {
         get
         {

@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class PuzzleManager : SmallManagerBase
+public class PuzzleManager: SingletonBehaviour<PuzzleManager>
 {
     [Header("Puzzles")]
     [SerializeField] private DefaultObserverEventHandler[] puzzleImageEvents;
+    private List<PuzzleDataSetter> puzzleDatas;
     private DefaultObserverEventHandler currentPuzzle; // 현재 플레이 중인 퍼즐
     private DefaultObserverEventHandler detactedPuzzle; // 새로 감지될 퍼즐(currentPuzzle의 후보)
 
@@ -16,12 +17,34 @@ public class PuzzleManager : SmallManagerBase
     [Header("Cube")]
     [SerializeField] private DefaultObserverEventHandler cubeImageEvent;
 
-    private void Start()
+    protected override void Init()
     {
+        base.Init();
+
         currentPuzzle = null;
-        foreach(var e in puzzleImageEvents)
+        foreach (var e in puzzleImageEvents)
         {
             e.OnTargetFound.AddListener(() => OnPuzzleDetacted(e));
+        }
+    }
+
+    public void LoadPuzzle()
+    {
+        int puzzleCount = LocalDataManager.Instance.PuzzleDatas.Count;
+        puzzleDatas = new List<PuzzleDataSetter>(puzzleCount);
+
+        foreach(var p in LocalDataManager.Instance.PuzzleDatas)
+        {
+            GameObject go = new GameObject(p.Name);
+            go.AddComponent<PuzzleDataSetter>().Load(p);
+        }
+    }
+
+    public void ResetPuzzleAll()
+    {
+        foreach(var e in puzzleImageEvents)
+        {
+            e.gameObject.SetActive(true);
         }
     }
 
@@ -40,28 +63,5 @@ public class PuzzleManager : SmallManagerBase
             return;
 
         OnPuzzleLostEvent?.Invoke();
-    }
-
-    protected override void OnTitleState()
-    {
-        currentPuzzle = null;
-
-        foreach(var p in puzzleImageEvents)
-        {
-            p.gameObject.SetActive(true);
-        }
-    }
-
-    protected override void OnGameRunState()
-    {
-        currentPuzzle = detactedPuzzle;
-        foreach (var p in puzzleImageEvents)
-        {
-            p.gameObject.SetActive(p == currentPuzzle);
-        }
-    }
-
-    protected override void OnTrophyState()
-    {
     }
 }
