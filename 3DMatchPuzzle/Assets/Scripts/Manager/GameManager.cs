@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Security.Policy;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -10,6 +9,7 @@ using UnityEngine.Events;
 /// </summary>
 public partial class GameManager : MonoBehaviour
 {
+    #region GameState
     public enum GameState
     {
         None = -1, // 상태 없음
@@ -35,13 +35,51 @@ public partial class GameManager : MonoBehaviour
     [field: SerializeField] public GameState PrevGameState { get; private set; }
 
     public UnityEvent<GameState> OnGameStateChanged { get; private set; } = new UnityEvent<GameState>();
+    public UnityEvent OnGameEnd { get; private set; } = new UnityEvent();
+    #endregion
 
+
+    #region GameTime
+    private float maxPlayTime;
+    private float elapsedTime;
+    private int elapsedSeconds;
+    [SerializeField] private float returnToHomeTime;
+    private WaitForSeconds waitForReturnToHome;
+
+    public UnityEvent<float, float> OnSecondTicked { get; private set; } = new UnityEvent<float, float>();
+    #endregion
+
+
+    private void Start()
+    {
+        PuzzleManager.Instance.OnPuzzleDetactedEvent?.RemoveListener(OnPuzzleDetacted);
+        PuzzleManager.Instance.OnPuzzleDetactedEvent?.AddListener(OnPuzzleDetacted);
+
+        PuzzleManager.Instance.OnPuzzleLostEvent?.RemoveListener(OnPuzzleLost);
+        PuzzleManager.Instance.OnPuzzleLostEvent?.AddListener(OnPuzzleLost);
+
+        waitForReturnToHome = new WaitForSeconds(returnToHomeTime);
+    }
+
+    public void ResetGame()
+    {
+        CurrentGameState = GameState.None;
+        maxPlayTime = 0f;
+        elapsedTime = 0f;
+        elapsedSeconds = -1;
+    }
 
     private void OnPuzzleDetacted(bool _isSameAsCurrentPuzzle)
     {
-        // 게임 도중, 혹은 일시정지 중에 잃었다가 다시 잡을 수 있음
-        if(CurrentGameState == GameState.Lost)
+        if(GameState.None == CurrentGameState)
         {
+            CurrentGameState = GameState.Run;
+            StartGame();
+        }
+        // 게임 도중, 혹은 일시정지 중에 잃었다가 다시 잡을 수 있음
+        else if(CurrentGameState == GameState.Lost)
+        {
+            Time.timeScale = 1f;
             CurrentGameState = PrevGameState;
         }
     }
@@ -49,10 +87,65 @@ public partial class GameManager : MonoBehaviour
     private void OnPuzzleLost()
     {
         if(CurrentGameState == GameState.Run || 
-            CurrentGameState == GameState.Pause)
+            CurrentGameState == GameState.Pause ||
+            CurrentGameState == GameState.Lost) // 중간에 간헐적으로 뻑남
         {
+            Time.timeScale = 0f;
             CurrentGameState = GameState.Lost;
         }
+    }
+
+    public void StartGame()
+    {
+        PuzzleManager.Instance.GameStart();
+        var data = PuzzleManager.Instance.GetCurrentPuzzleData();
+        if (data == null)
+            Debug.LogError("PuzzleData 이상");
+
+        maxPlayTime = data.MaxPlayTime;
+    }
+
+    public void PauseGame()
+    {
+        Time.timeScale = 0f;
+        CurrentGameState = GameState.Pause;
+    }
+
+    public void ResumeGame()
+    {
+        Time.timeScale = 1f;
+        CurrentGameState = GameState.Run;
+    }
+
+    public void GameEnd(bool _gameWin)
+    {
+        CurrentGameState = _gameWin ? GameState.Win : GameState.Lose;
+        StartCoroutine(CoReturnToTitle());
+    }
+
+    private void Update()
+    {
+        if(currentGameState == GameState.Run && maxPlayTime > 0f)
+        {
+            elapsedTime += Time.deltaTime;
+            int newSecond = (int)elapsedTime;
+            if(newSecond > elapsedSeconds)
+            {
+                OnSecondTicked?.Invoke((maxPlayTime - elapsedTime), maxPlayTime);
+                elapsedSeconds = newSecond;
+            }
+            if(maxPlayTime - elapsedTime <=0 )
+            {
+                GameEnd(false);
+            }
+        }
+    }
+
+    private IEnumerator CoReturnToTitle()
+    {
+        yield return waitForReturnToHome;
+        CurrentGameState = GameState.None;
+        OnGameEnd?.Invoke();
     }
 }
 

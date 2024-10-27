@@ -9,6 +9,8 @@ public class TitleUIManager : MonoBehaviour
     [SerializeField] private Button goToTrophyBtn;
     public UnityEvent OnClickTrophyBtn { get; private set; } = new UnityEvent();
 
+    [SerializeField] private GameManager gameManager;
+
     private void Start()
     {
         goToTrophyBtn.onClick.RemoveAllListeners();
@@ -17,6 +19,22 @@ public class TitleUIManager : MonoBehaviour
         LocalDataManager.Instance.DatakInitialize();
         PlayerPrebsManager.Instance.Init();
         PuzzleManager.Instance.LoadPuzzle();
+
+        PuzzleManager.Instance.OnPuzzleDetactedEvent?.RemoveListener(OnPuzzleDetected);
+        PuzzleManager.Instance.OnPuzzleDetactedEvent?.AddListener(OnPuzzleDetected);
+
+        gameManager.OnGameEnd.AddListener(() => gameObject.SetActive(true));
+    }
+
+    private void OnEnable()
+    {
+        PuzzleManager.Instance.ResetPuzzleAll();
+        gameManager.ResetGame();
+    }
+
+    private void OnPuzzleDetected(bool _)
+    {
+        gameObject.SetActive(false);
     }
 
     private void GoToTrophy()
