@@ -125,7 +125,11 @@ public partial class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if(currentGameState == GameState.Run && maxPlayTime > 0f)
+        if (CurrentGameState != GameState.Run)
+            return;
+
+        // 제한 시간 표기
+        if(maxPlayTime > 0f)
         {
             elapsedTime += Time.deltaTime;
             int newSecond = (int)elapsedTime;
@@ -137,6 +141,23 @@ public partial class GameManager : MonoBehaviour
             if(maxPlayTime - elapsedTime <=0 )
             {
                 GameEnd(false);
+            }
+        }
+
+        // 화면 터치로 퍼즐 피스 보이기
+        if (Input.GetMouseButton(0))
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Debug.DrawRay(ray.origin, ray.direction * 1000, Color.blue);
+
+            RaycastHit hit;
+            if(Physics.Raycast(ray, out hit, 1000) == true)
+            {
+                CubeSide side = hit.transform.GetComponent<CubeSide>();
+                if(side)
+                {
+                    side.Hit();
+                }
             }
         }
     }

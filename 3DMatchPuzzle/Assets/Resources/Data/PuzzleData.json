@@ -77,7 +77,7 @@
                     }
                 }
             ],
-            "MaxPlayTime": 3.0
+            "MaxPlayTime": 300.0
         }
     ]
 }

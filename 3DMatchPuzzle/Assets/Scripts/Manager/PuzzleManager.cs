@@ -61,7 +61,14 @@ public class PuzzleManager: SingletonBehaviour<PuzzleManager>
         {
             GameObject go = new GameObject(p.Name);
             puzzleDatas.Add(go.AddComponent<PuzzleDataSetter>());
-            puzzleDatas[puzzleDatas.Count - 1].Load(p);
+            int index = puzzleDatas.Count - 1;
+
+            puzzleDatas[index].Load(p);
+            for (int i = 0; i < PieceCount; ++i)
+            {
+                puzzles[index].Pieces[i].localPosition = puzzleDatas[index].Data.PuzzlePieceTransforms[i].Position;
+                puzzles[index].Pieces[i].localRotation = Quaternion.Euler(puzzleDatas[index].Data.PuzzlePieceTransforms[i].Rotation);
+            }
         }
     }
 

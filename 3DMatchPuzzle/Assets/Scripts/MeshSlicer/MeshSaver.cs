@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class MeshSaver : MonoBehaviour
 {
+#if UNITY_EDITOR
     [MenuItem("CONTEXT/MeshFilter/Save Mesh...")]
     public static void SaveMeshInPlace(MenuCommand menuCommand)
     {
@@ -36,4 +37,5 @@ public class MeshSaver : MonoBehaviour
         AssetDatabase.CreateAsset(meshToSave, path);
         AssetDatabase.SaveAssets();
     }
+#endif
 }
