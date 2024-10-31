@@ -1,11 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 
 public class CharacterAttack : MonoBehaviour
 {
-    [SerializeField] private Transform fruitPosition;
+    [SerializeField] private Transform camaraTrs;
+    [SerializeField] private Vector3 position;
     [SerializeField] private GameObject apple;
     private Rigidbody appleRigid;
 
@@ -58,18 +60,30 @@ public class CharacterAttack : MonoBehaviour
         if (isFruitThrowing)
             return;
 
+#if UNITY_EDITOR
         if(Input.GetMouseButtonDown(0))
+#elif PLATFORM_ANDROID
+        if(Input.GetTouch(0).phase == TouchPhase.Began)
+#endif
         {
+#if UNITY_EDITOR
             mousePosition = Input.mousePosition;
+#elif PLATFORM_ANDROID
+            mousePosition = Input.GetTouch(0).position;
+#endif
         }
         else if(Input.GetMouseButtonUp(0))
         {
+#if UNITY_EDITOR
             var offset = mousePosition - Input.mousePosition;
+#elif PLATFORM_ANDROID
+            Vector3 offset = mousePosition - (Vector3)Input.GetTouch(0).position;
+#endif
             var force = offset.magnitude;
 
             appleRigid.isKinematic = false;
-            appleRigid.AddForce((transform.forward + transform.up).normalized * force * throwForceRatio);
-            appleRigid.AddTorque(Vector3.right * -10f);
+            appleRigid.AddForce((camaraTrs.forward + camaraTrs.up).normalized * force * throwForceRatio);
+            appleRigid.AddTorque(-offset.y, offset.x, 0f);
 
             isFruitThrowing = true;
 
@@ -82,8 +96,9 @@ public class CharacterAttack : MonoBehaviour
         if (isFruitThrowing)
             return;
 
-        apple.transform.position = fruitPosition.position;
-        apple.transform.rotation = fruitPosition.rotation;
+        apple.transform.position = camaraTrs.position + 
+            camaraTrs.forward * 0.4f - camaraTrs.up * .12f;
+        apple.transform.rotation = camaraTrs.rotation;
     }
 
     private IEnumerator CoResetApple()

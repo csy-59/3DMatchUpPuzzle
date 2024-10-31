@@ -46,6 +46,8 @@ public class HuntingUIManager : MonoBehaviour
 
         manager.OnReayTimePassed?.RemoveListener(OnReadyTime);
         manager.OnReayTimePassed?.AddListener(OnReadyTime);
+
+        SetPanelsActive();
     }
 
     private void OnStateChanged()

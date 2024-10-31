@@ -76,6 +76,10 @@ public class HuntingManager : MonoBehaviour
     {
         Initialize();
 
+    }
+
+    public void Test()
+    {
         // Å×½ºÆ®
         SetHuntingScene(animalDictionary[AnimalType.Pudu].GetComponent<AnimalData>());
         StartHunting();

@@ -43,7 +43,11 @@ public class FruitKnife : MonoBehaviour
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         Debug.DrawRay(ray.origin, ray.direction, Color.green);
 
+#if UNITY_EDITOR
         if (Input.GetMouseButton(0))
+#elif PLATFORM_ANDROID
+        if(Input.GetTouch(0).phase == TouchPhase.Moved)
+#endif
         {
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, sliceDistance, targetLayer))
