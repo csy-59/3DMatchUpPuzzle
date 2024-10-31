@@ -5,22 +5,20 @@ using UnityEngine.Events;
 using UnityEngine;
 
 public class HuntingManager : MonoBehaviour
-{ 
-    [Serializable] 
-    private class AnimalPrefab
-    {
-        public AnimalType Type;
-        public GameObject Prefab;
-    }
-
-    [Header("Animals")]
-    [SerializeField] private AnimalPrefab[] animalPrefabs;
+{
+    //[Header("Animals")]
+    private GameObject[] animalPrefabs;
+    private AnimalData[] animalDatas;
     private Dictionary<AnimalType, GameObject> animalDictionary = new Dictionary<AnimalType, GameObject>();
+    private int[] animalHuntedCounts;
+    public int[] AniamlHuntedCounts => animalHuntedCounts;
     private AnimalData animalData;
     private GameObject animalObj;
     private AnimalAttack attack;
     public AnimalHit AnimalHit { get; private set; }
     private bool isReady = false;
+    [Header("Manager")]
+    [SerializeField] private GameManager gameManager;
 
     [Header("Player")]
     [SerializeField] private CharacterHit playerHit;
@@ -75,21 +73,23 @@ public class HuntingManager : MonoBehaviour
     private void Start()
     {
         Initialize();
-
     }
 
     public void Test()
     {
-        // 테스트
         SetHuntingScene(animalDictionary[AnimalType.Pudu].GetComponent<AnimalData>());
         StartHunting();
     }
 
     private void Initialize()
     {
-        foreach (var anim in animalPrefabs)
+        animalPrefabs = gameManager.Animals;
+        animalDatas = gameManager.AnimalDatas;
+        animalHuntedCounts = new int[animalPrefabs.Length];
+        for(int i = 0; i< animalPrefabs.Length; ++i)
         {
-            animalDictionary[anim.Type] = anim.Prefab;
+            animalDictionary[animalDatas[i].Type] = animalPrefabs[i];
+            animalHuntedCounts[i] = 0;
         }
 
         waitForOneSecond = new WaitForSeconds(1f);
@@ -111,7 +111,7 @@ public class HuntingManager : MonoBehaviour
         animalData = _data;
         foreach(var anim in animalPrefabs)
         {
-            anim.Prefab.gameObject.SetActive(false);
+            anim.SetActive(false);
         }
         animalObj = animalDictionary[_data.Type];
         animalObj.gameObject.SetActive(true);
@@ -227,6 +227,8 @@ public class HuntingManager : MonoBehaviour
     {
         if(AnimalHit.CurrentHealth <= 0)
         {
+            Debug.Log("사냥 성공");
+            ++animalHuntedCounts[(int)animalData.Type];
             CurrentState = HuntState.Success;
             playerAttackCount = 0;
             OnHuntingEnd();
