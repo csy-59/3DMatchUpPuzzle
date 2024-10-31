@@ -12,7 +12,7 @@ public class AnimalHit : MonoBehaviour
     public int CurrentHealth { get => currentHealth; set { currentHealth = value; OnHit?.Invoke(); } }
     public UnityEvent OnHit { get; private set; } = new UnityEvent();
 
-    private LayerMask playerFruitLayer = 1 << 7;
+    private int playerFruitLayer;
 
     private HuntingManager manager;
 
@@ -21,6 +21,8 @@ public class AnimalHit : MonoBehaviour
         manager = GameObject.FindObjectOfType<HuntingManager>();
         manager.OnHuntStateChanged?.RemoveListener(OnStateChanged);
         manager.OnHuntStateChanged?.AddListener(OnStateChanged);
+
+        playerFruitLayer = LayerMask.NameToLayer("PlayerFruit");
     }
 
     private void OnStateChanged()
@@ -48,9 +50,9 @@ public class AnimalHit : MonoBehaviour
         hitBox.enabled = true;
     }
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnTriggerEnter(Collider other)
     {
-        if (collision.gameObject.layer != playerFruitLayer.value)
+        if (other.gameObject.layer != playerFruitLayer)
             return;
 
         // 주인공이 던지 과일에 맞음

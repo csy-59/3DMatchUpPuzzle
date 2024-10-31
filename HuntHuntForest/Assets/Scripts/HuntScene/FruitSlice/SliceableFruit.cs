@@ -8,12 +8,13 @@ public class SliceableFruit : MonoBehaviour
     [SerializeField] private int damage;
     public int Damage => damage;
 
+    [SerializeField] private Collider colli;
     [SerializeField] private MeshRenderer render;
     [SerializeField] private Transform[] effectObjs;
     [SerializeField] private ParticleSystem[] effects;
     private WaitForSeconds waitForEffectEnd;
 
-    public UnityEvent OnFruitSliced = new UnityEvent();
+    public UnityEvent OnFruitDetroy = new UnityEvent();
     private void Start()
     {
         Init();
@@ -48,14 +49,15 @@ public class SliceableFruit : MonoBehaviour
         }
 
         render.enabled = true;
+        colli.enabled = true;
     }
 
     public void Sliced()
     {
-        OnFruitSliced?.Invoke();
         render.enabled = false;
+        colli.enabled = false;
 
-        foreach(var obj in effectObjs)
+        foreach (var obj in effectObjs)
         {
             obj.SetParent(null);
             obj.position = transform.position;
@@ -85,7 +87,9 @@ public class SliceableFruit : MonoBehaviour
 
     private void OnDestroy()
     {
-        foreach(var obj in effectObjs)
+
+        OnFruitDetroy?.Invoke();
+        foreach (var obj in effectObjs)
         {
             Destroy(obj);
         }

@@ -54,24 +54,35 @@ public class FruitKnife : MonoBehaviour
             }
             else if (targetObj != null)
             {
-                // 자르기 완료
-                targetObj.GetComponent<SliceableFruit>().Sliced();
-
-                Vector3 endNormalVector = ray.direction;
-                Vector3 resultNoramlVector = Vector3.Cross(startNormalVector, endNormalVector);
-                var objs = MeshSlicer.Instance.Slice(targetObj, targetObj.transform.position, resultNoramlVector, capMaterail);
-
-                float dir = 1;
-                foreach (var obj in objs)
+                try
                 {
-                    Rigidbody rb = obj.AddComponent<Rigidbody>();
-                    rb.AddForce(Vector3.one * dir, ForceMode.Impulse);
-                    dir *= -1f;
+                    // 자르기 완료
 
-                    Destroy(obj, 3f);
+                    Vector3 endNormalVector = ray.direction;
+                    Vector3 resultNoramlVector = Vector3.Cross(startNormalVector, endNormalVector);
+
+                    if ((startNormalVector - endNormalVector).magnitude < 0.1f)
+                        return;
+
+                    var objs = MeshSlicer.Instance.Slice(targetObj, targetObj.transform.position, resultNoramlVector, capMaterail);
+
+                    float dir = 1;
+                    foreach (var obj in objs)
+                    {
+                        Rigidbody rb = obj.AddComponent<Rigidbody>();
+                        rb.AddForce(Vector3.one * dir, ForceMode.Impulse);
+                        dir *= -1f;
+
+                        Destroy(obj, 3f);
+                    }
+
+                    targetObj.GetComponent<SliceableFruit>().Sliced();
+                    targetObj = null;
                 }
+                catch
+                {
 
-                targetObj = null;
+                }
             }
             else
             {

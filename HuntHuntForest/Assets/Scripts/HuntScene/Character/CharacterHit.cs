@@ -12,7 +12,7 @@ public class CharacterHit : MonoBehaviour
 
     [SerializeField] private Collider hitBox;
 
-    public UnityEvent<SliceableFruit> OnHitFruit = new UnityEvent<SliceableFruit>();
+    public UnityEvent OnHitFruit = new UnityEvent();
     private int fruitLayer;
 
     private HuntingManager manager;
@@ -60,6 +60,6 @@ public class CharacterHit : MonoBehaviour
 
         // 과일에 맞음
         currentHealth -= fruit.Damage;
-        OnHitFruit?.Invoke(other.GetComponent<SliceableFruit>());
+        OnHitFruit?.Invoke();
     }
 }

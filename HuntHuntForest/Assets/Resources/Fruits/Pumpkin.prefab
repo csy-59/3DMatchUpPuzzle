@@ -147,6 +147,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   damage: 2
+  colli: {fileID: -4140309125399911461}
   render: {fileID: 6728717918809541099}
   effectObjs: []
   effects: []

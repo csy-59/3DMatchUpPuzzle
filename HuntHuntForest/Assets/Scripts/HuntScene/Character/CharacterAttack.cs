@@ -89,7 +89,9 @@ public class CharacterAttack : MonoBehaviour
     private IEnumerator CoResetApple()
     {
         yield return waitForReturnTime;
-        appleRigid.isKinematic = false;
+        appleRigid.isKinematic = true;
+        appleRigid.velocity = Vector3.zero;
+        appleRigid.angularVelocity = Vector3.zero;
         isFruitThrowing = false;
 
         OnCharacterAttackEnd?.Invoke();

@@ -19,12 +19,13 @@ public class HuntingManager : MonoBehaviour
     private AnimalData animalData;
     private GameObject animalObj;
     private AnimalAttack attack;
-    private AnimalHit animalHit;
+    public AnimalHit AnimalHit { get; private set; }
     private bool isReady = false;
 
     [Header("Player")]
     [SerializeField] private CharacterHit playerHit;
     [SerializeField] private CharacterAttack playerAttack;
+    public CharacterHit PlayerHit { get; private set; }
 
     public enum HuntState
     {
@@ -58,12 +59,14 @@ public class HuntingManager : MonoBehaviour
     [SerializeField] private float minAttackCoolTime;
     [SerializeField] private float maxAttackCoolTime;
     private int animalAttackCount;
+    public UnityEvent OnDefenceStart { get; private set; } = new UnityEvent();
 
     [Header("Attack")]
     [SerializeField] private int playerMaxAttackCount = 3;
     [SerializeField] private float attackStartOffsetTime = 1f;
     private WaitForSeconds waitForAttackStart;
     private int playerAttackCount;
+    public UnityEvent OnAttackStart { get; private set; } = new UnityEvent();
 
     [Header("HuntEnd")]
     [SerializeField] private float returnToSearchTime;
@@ -89,9 +92,12 @@ public class HuntingManager : MonoBehaviour
         waitForReturnToSearch = new WaitForSeconds(returnToSearchTime);
         waitForAttackStart = new WaitForSeconds(attackStartOffsetTime);
 
-        playerHit.OnHitFruit.AddListener((SliceableFruit _) => OnAnimalAttackEnd());
+        playerHit.OnHitFruit?.RemoveListener(OnAnimalAttackEnd);
+        playerHit.OnHitFruit?.AddListener(OnAnimalAttackEnd);
         playerAttack.OnCharacterAttackEnd?.RemoveListener(OnPlayerAttackEnd);
         playerAttack.OnCharacterAttackEnd?.AddListener(OnPlayerAttackEnd);
+
+        PlayerHit = playerHit;
 
         ResetData();
     }
@@ -106,10 +112,10 @@ public class HuntingManager : MonoBehaviour
         animalObj = animalDictionary[_data.Type];
         animalObj.gameObject.SetActive(true);
         attack = animalObj.GetComponent<AnimalAttack>();
-        animalHit = animalObj.GetComponent<AnimalHit>();
+        AnimalHit = animalObj.GetComponent<AnimalHit>();
 
-        animalHit.OnHit?.RemoveListener(OnAnimalHit);
-        animalHit.OnHit?.AddListener(OnAnimalHit);
+        AnimalHit.OnHit?.RemoveListener(OnAnimalHit);
+        AnimalHit.OnHit?.AddListener(OnAnimalHit);
 
         CurrentState = HuntState.Ready;
 
@@ -136,25 +142,37 @@ public class HuntingManager : MonoBehaviour
             Debug.Log(readyTime - i);
         }
 
-        CurrentState = HuntState.Defence;
+        yield return waitForOneSecond;
+        OnReayTimePassed?.Invoke(0);
+
         StartCoroutine(CoDefenceTurn());
     }
 
     private IEnumerator CoDefenceTurn()
     {
         Debug.Log("방어 턴 시작");
-        for(int i = 0; i< animalData.AttackCount; ++i)
+        OnDefenceStart?.Invoke();
+        yield return waitForOneSecond;
+
+        CurrentState = HuntState.Defence;
+        for (int i = 0; i< animalData.AttackCount; ++i)
         {
             float waitTime = UnityEngine.Random.Range(minAttackCoolTime, maxAttackCoolTime);
             yield return new WaitForSeconds(waitTime);
             var fruit = attack.Throw();
-            fruit.OnFruitSliced.AddListener(OnAnimalAttackEnd);
+            fruit.OnFruitDetroy.AddListener(OnAnimalAttackEnd);
         }
     }
 
 
     private void OnAnimalAttackEnd()
     {
+        if (CurrentState != HuntState.Defence)
+        {
+            animalAttackCount = 0;
+            return;
+        }
+
         ++animalAttackCount;
 
         // 사냥 실패
@@ -178,9 +196,11 @@ public class HuntingManager : MonoBehaviour
 
     private IEnumerator CoStartAttack()
     {
-        yield return waitForAttackStart;
 
         Debug.Log("공격 시작");
+        OnAttackStart?.Invoke();
+        yield return waitForAttackStart;
+
         CurrentState = HuntState.Attack;
     }
 
@@ -201,9 +221,9 @@ public class HuntingManager : MonoBehaviour
     
     private void OnAnimalHit()
     {
-        if(animalHit.CurrentHealth <= 0)
+        if(AnimalHit.CurrentHealth <= 0)
         {
-            currentState = HuntState.Success;
+            CurrentState = HuntState.Success;
             playerAttackCount = 0;
             OnHuntingEnd();
         }
