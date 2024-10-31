@@ -250,8 +250,6 @@ public class MeshSlicer : SingletonBehaviour<MeshSlicer>
         sideBObj.transform.position = _targetMesh.transform.position;
         sideBObj.transform.rotation = _targetMesh.transform.rotation;
 
-        _targetMesh.SetActive(false);
-
         return new GameObject[] { sideAObj, sideBObj };
     }
 

@@ -1,19 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class CharacterHit : MonoBehaviour
+public class AnimalHit : MonoBehaviour
 {
-    [SerializeField] private int maxHealth;
-    private int currentHealth;
-    public int CurrentHealth => currentHealth;
-
+    [SerializeField] private AnimalData data;
     [SerializeField] private Collider hitBox;
 
-    public UnityEvent<SliceableFruit> OnHitFruit = new UnityEvent<SliceableFruit>();
-    private int fruitLayer;
+    private int currentHealth;
+    public int CurrentHealth { get => currentHealth; set { currentHealth = value; OnHit?.Invoke(); } }
+    public UnityEvent OnHit { get; private set; } = new UnityEvent();
+
+    private LayerMask playerFruitLayer = 1 << 7;
 
     private HuntingManager manager;
 
@@ -22,13 +21,11 @@ public class CharacterHit : MonoBehaviour
         manager = GameObject.FindObjectOfType<HuntingManager>();
         manager.OnHuntStateChanged?.RemoveListener(OnStateChanged);
         manager.OnHuntStateChanged?.AddListener(OnStateChanged);
-
-        fruitLayer = LayerMask.NameToLayer("SliceableObj");
     }
 
     private void OnStateChanged()
     {
-        switch (manager.CurrentState)
+        switch(manager.CurrentState)
         {
             case HuntingManager.HuntState.Ready: Ready(); break;
             case HuntingManager.HuntState.Defence: Defence(); break;
@@ -38,28 +35,25 @@ public class CharacterHit : MonoBehaviour
 
     private void Ready()
     {
-        currentHealth = maxHealth;
+        currentHealth = data.Health;
     }
 
     private void Defence()
     {
-        hitBox.enabled = true;
+        hitBox.enabled = false;
     }
 
     private void Attack()
     {
-        hitBox.enabled = false;
+        hitBox.enabled = true;
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnCollisionEnter(Collision collision)
     {
-        if (other.gameObject.layer != fruitLayer)
-            return;     
+        if (collision.gameObject.layer != playerFruitLayer.value)
+            return;
 
-        var fruit = other.GetComponent<SliceableFruit>();
-
-        // 과일에 맞음
-        currentHealth -= fruit.Damage;
-        OnHitFruit?.Invoke(other.GetComponent<SliceableFruit>());
+        // 주인공이 던지 과일에 맞음
+        --CurrentHealth;
     }
 }

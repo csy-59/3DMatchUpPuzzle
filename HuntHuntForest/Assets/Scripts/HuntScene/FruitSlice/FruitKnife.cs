@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,6 +11,32 @@ public class FruitKnife : MonoBehaviour
     private Vector3 startNormalVector = Vector3.zero;
 
     private GameObject targetObj;
+
+    private HuntingManager manager;
+
+    private void Start()
+    {
+        manager = GameObject.FindObjectOfType<HuntingManager>();
+        manager.OnHuntStateChanged?.RemoveListener(OnStateChanged);
+        manager.OnHuntStateChanged?.AddListener(OnStateChanged);
+    }
+
+    private void OnStateChanged()
+    {
+        switch(manager.CurrentState)
+        {
+            case HuntingManager.HuntState.Defence:
+                {
+                    this.enabled = true;
+                    break;
+                }
+            default:
+                {
+                    this.enabled = false;
+                    break;
+                }
+        }
+    }
 
     private void Update()
     {
@@ -28,6 +55,8 @@ public class FruitKnife : MonoBehaviour
             else if (targetObj != null)
             {
                 // 자르기 완료
+                targetObj.GetComponent<SliceableFruit>().Sliced();
+
                 Vector3 endNormalVector = ray.direction;
                 Vector3 resultNoramlVector = Vector3.Cross(startNormalVector, endNormalVector);
                 var objs = MeshSlicer.Instance.Slice(targetObj, targetObj.transform.position, resultNoramlVector, capMaterail);
